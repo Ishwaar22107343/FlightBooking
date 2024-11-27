@@ -1,7 +1,23 @@
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 public class Main {
     public static void main(String[] args) {
-
+        // Replace file path when needed
+        String fileName = "C://Users//ISHWAAR//Documents//SEM3//DS//flight_booking_details.csv";
+        try{
+            BufferedReader br = new BufferedReader(new FileReader(fileName));
+            String line;
+            while((line = br.readLine()) != null){
+                System.out.println(line);
+            }
+        }catch(FileNotFoundException e){
+            System.out.println("File not Found");
+        }catch(IOException e){
+            System.out.println("IO Exception thrown");
+        }
     }
 }
 
@@ -102,6 +118,19 @@ class Queue <E> {
         enqueue(temp);
         return temp;
     }
-    System.out.println("idk");
 
+    //method to search flight
+    public void searchFlight(String date1, String date2){
+
+        }
+
+    //method to edit ticket information
+    public void editTicket(String passengerName, String passportNumber){
+
+    }
+
+    //method to view ticket status
+    public void viewTicketStatus(String passengerName, String passportNumber, String flightName, String ticketNumber){
+
+    }
 }
