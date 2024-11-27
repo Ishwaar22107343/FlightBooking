@@ -102,5 +102,6 @@ class Queue <E> {
         enqueue(temp);
         return temp;
     }
+    System.out.println("idk");
 
 }
