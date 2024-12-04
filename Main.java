@@ -1,136 +1,151 @@
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
+import java.util.Scanner;
+
 public class Main {
     public static void main(String[] args) {
-        // Replace file path when needed
-        String fileName = "C://Users//ISHWAAR//Documents//SEM3//DS//flight_booking_details.csv";
-        try{
-            BufferedReader br = new BufferedReader(new FileReader(fileName));
-            String line;
-            while((line = br.readLine()) != null){
-                System.out.println(line);
+        //Main Page
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("===Welcome to Cholaz Flight Booking Services===");
+        System.out.println("======Please choose your choice of action======");
+        do{
+            System.out.println("1. Search for flight availability");
+            System.out.println("2. Book a flight ticket");
+            System.out.println("3. Edit flight ticket information");
+            System.out.println("4. View flight ticket Status");
+            System.out.println("5. Cancel a flight ticket");
+            System.out.println("6. Exit System");
+
+            System.out.print("Input your choice of action: ");
+            String input = scanner.nextLine();
+
+            if(input.equals("1")){
+                continue;
+            }else if(input.equals("2")){
+                continue;
+            }else if(input.equals("3")){
+                FlightTicketBooking.editTicket();
+                continue;
+            }else if(input.equals("4")){
+                continue;
+            }else if(input.equals("5")){
+                continue;
+            }else if(input.equals("6")){
+                System.out.println("Thank you for choosing Cholaz Flight Booking Services");
+                System.out.println();
+                System.out.println("==============================");
+                break;
+            }else{
+                System.out.println("Please enter a valid input");
+                continue;
             }
-        }catch(FileNotFoundException e){
-            System.out.println("File not Found");
-        }catch(IOException e){
-            System.out.println("IO Exception thrown");
-        }
+
+        }while(true);
     }
 }
 
-class Queue <E> {
-    private int head;
-    private int tail;
-    private E passenger[];
-    private int maxSize;
-    private ArrayList <E> waiting;
-    private int waitHead;
-    private int waitTail;
-
-    public Queue(int maxSize){
-        this.maxSize = maxSize;
-        this.head = 0;
-        this.tail = 0;
-        this.passenger = (E[]) new Object[maxSize];
-        this.waiting = new ArrayList<>();
-        this.waitHead = 0;
-        this.waitTail =0;
-    }
-
-    public boolean isEmpty(){
-        return tail == 0;
-    }
-
-    public boolean isFull(){
-        return tail == maxSize;
-    }
-
-    public void enqueue(E passengerName){
-        if(!isFull()){
-            passenger[tail] = passengerName;
-            System.out.println("Ticket booked for passenger "+passengerName);
-            tail++;
-        }else{
-            System.out.println("Flight is full...");
-            System.out.println("You'll be added to the waiting list...");
-            waitingEnqueue(passengerName);
-        }
-    }
-
-    public E dequeue(){
-        if (isEmpty()) {
-            System.out.println("Flight is empty");
-            return null;
-        }else if(!isEmpty() && !isFull()){
-            E temp = passenger[head];
-            for (int i = 0; i < tail; i++) {
-                passenger[i] = passenger[i+1];
-            }
-            passenger[tail] = null;
-            System.out.println("Cancelling ticket for passenger "+temp);
-            tail--;
-            return temp;
-        }else{
-            E temp = passenger[head];
-            for (int i = 0; i < tail; i++) {
-                passenger[i] = passenger[i+1];
-            }
-            passenger[tail] = null;
-            System.out.println("Cancelling ticket for "+temp);
-            tail--;
-            waitingDequeue();
-            return temp;
-        }
-    }
-
-    public void display() {
-        if (!isEmpty()) {
-            System.out.println("\nThere are " + tail + " passengers in the flight...\nDisplaying passsenger details");
-            System.out.println();
-            for (int i = 0; i < tail; i++) {
-                System.out.print((i+1) + ". ");
-                System.out.print(passenger[i]);
-                System.out.println();
-            }
-            System.out.println();
-        } else {
-            System.out.println("Flight is empty");
-        }
-    }
-
-    //method to add passengers to waiting list if flight is full
-    public void waitingEnqueue(E s){
-        waiting.add(s);
-        waitTail++;
-    }
-    //method that adds passenger from waiting list into the flight once vacancy available
-    public E waitingDequeue(){
-        E temp = waiting.get(waitHead);
-        for (int i = 0; i < waitTail; i++) {
-            waiting.set(i, waiting.get(i+1));
-        }
-        waiting.remove(waitTail);
-        waitTail--;
-        System.out.println("Ticket available, Ticket booked for "+temp);
-        enqueue(temp);
-        return temp;
-    }
+class FlightTicketBooking {
 
     //method to search flight
-    public void searchFlight(String date1, String date2){
+    public static void searchFlight(String date1, String date2){
 
         }
 
     //method to edit ticket information
-    public void editTicket(String passengerName, String passportNumber){
+    public static void editTicket(){
 
+        String inputFilePath = "C://Users//ISHWAAR//Documents//SEM3//DS//FlightBooking.csv";
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Enter Flight Name: ");
+        String flightName = scanner.nextLine();
+        System.out.println("Enter ticket number: ");
+        String ticketNumber = scanner.nextLine();
+        System.out.println("Enter date: ");
+        String date = scanner.nextLine();
+
+        boolean isEdited = false;
+
+        try{
+            BufferedReader reader = new BufferedReader(new FileReader(inputFilePath));
+            StringBuilder updatedContent = new StringBuilder();
+            String line;
+
+            while((line = reader.readLine()) != null){
+                String [] details = new String [6];
+                details =line.split(",");
+                //Finding ticket that is intended to be edited
+                if(details[0].trim().equalsIgnoreCase(flightName.trim()) && details[2].trim().equalsIgnoreCase(date.trim()) && details [5].trim().equalsIgnoreCase(ticketNumber.trim())){
+
+                    System.out.println("Ticket found in flight "+details[0]+" under passenger "+details[3]+" passport number "+details[4]);
+                    System.out.println("Enter new passenger name: ");
+                    details[3] = scanner.nextLine();
+                    System.out.println("Enter new Passport number: ");
+                    details[4] = scanner.nextLine();
+                    System.out.println("Editing passenger information...");
+                    isEdited = true;
+                }
+                //Append current or updated line to updated content
+                updatedContent.append(String.join(",",details)).append(System.lineSeparator());
+            }
+            reader.close();
+
+            //Overwrite the file with updated content
+            BufferedWriter writer = new BufferedWriter(new FileWriter(inputFilePath));
+            writer.write(updatedContent.toString());
+            writer.close();
+
+            if(isEdited){
+                System.out.println("Ticket updated successfully...");
+                System.out.println();
+                System.out.println("==============================");
+                System.out.println();
+            }else{
+                System.out.println("No matching ticket found. No changes made...");
+                System.out.println();
+                System.out.println("==============================");
+                System.out.println();
+            }
+
+        }catch(FileNotFoundException e){
+            System.out.println("File Not Found");
+        }catch(IOException e){
+            System.out.println("IO Exception thrown");
+        }
     }
 
     //method to view ticket status
-    public void viewTicketStatus(String passengerName, String passportNumber, String flightName, String ticketNumber){
+    public  static void viewTicketStatus(String passengerName, String passportNumber, String flightName, String ticketNumber){
+        String inputFilePath = "C://Users//ISHWAAR//Documents//SEM3//DS//testing.csv";
+        Scanner scanner = new Scanner(System.in);
+        System.out.printf("Enter Flight Name: ");
+        String flightName = scanner.nextLine();
+        System.out.println("Enter Passenger Name: ");
+        String passengerName = scanner.nextLine();
+        System.out.println("Enter Passport Number: ");
+        String passportNumber = scanner.nextLine();
+        System.out.println("Enter date: ");
+        String date = scanner.nextLine();
 
+        try{
+            BufferedReader reader = new BufferedReader(new FileReader(inputFilePath));
+            String line;
+
+            while((line = reader.readLine()) != null){
+                String [] details = new String [6];
+                details =line.split(",");
+                //Finding ticket under passenger name and passport number
+                if(details[0].trim().equalsIgnoreCase(flightName.trim()) && details[2].trim().equalsIgnoreCase(date.trim()) && details [3].trim().equalsIgnoreCase(passengerName.trim()) && details [4].trim().equalsIgnoreCase(passportNumber.trim())){
+                    System.out.println("Ticket found in flight "+details[0]+" under passenger "+details[3]+" passport number "+details[4]);
+                    System.out.println("Ticket status: CONFIRMED");
+                    break;
+                }
+
+            }
+
+        }catch(FileNotFoundException e){
+            System.out.println("File Not Found");
+        }catch(IOException e){
+            System.out.println("IO Exception thrown");
+        }
     }
 }
