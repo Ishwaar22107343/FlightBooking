@@ -20,7 +20,7 @@ public class Main {
             String input = scanner.nextLine();
 
             if(input.equals("1")){
-                continue;
+                FlightTicketBooking.searchFlight();
             }else if(input.equals("2")){
                 continue;
             }else if(input.equals("3")){
@@ -47,7 +47,44 @@ public class Main {
 class FlightTicketBooking {
 
     //method to search flight
-    public static void searchFlight(String date1, String date2){
+    public static void searchFlight(){
+         String inputFilePath = "C://Users//ISHWAAR//Documents//SEM3//DS//FlightBooking.csv";
+         SimpleDateFormat dateformat = new SimpleDateFormat("d/M/yyyy");
+         Scanner scanner = new Scanner(System.in):
+         System.out.println("Enter start date (d/M/yyyy): ");
+         String startDate = scanner.nextLine();
+         System.out.println("Enter end date (d/M/yyyy): ");
+         String endDate = scanner.nextLine();
+         boolean flightFound = false;
+         try {
+            BufferedReader reader = new BufferedReader(new FileReader(inputFilePath));
+            String line;
+            System.out.println("Flights available between " + startDate + " and " + endDate + ":");
+            System.out.println("Flight\tCapacity\tDate");
+            while ((line = reader.readLine()) != null) {
+                String[] details = line.split(",");
+                String flightDate = details[2].trim();
+                Date flightDateObj = dateFormat.parse(flightDate);
+                Date startDateObj = dateFormat.parse(startDate);
+                Date endDateObj = dateFormat.parse(endDate);
+
+                if (!flightDateObj.before(startDateObj) && !flightDateObj.after(endDateObj)) {
+                    System.out.println(details[0] + "\t" + details[1] + "\t\t" + flightDate);
+                    flightFound = true;
+            }
+        }
+        reader.close();
+        if (!flightFound) {
+            System.out.println("No flights available during this duration.");
+        }
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found");
+        } catch (IOException e) {
+            System.out.println("Error reading the file.");
+        } catch (ParseException e) {
+            System.out.println("Invalid date format. Please enter in d/M/yyyy format.");
+        }
+    }
 
         }
 
