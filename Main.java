@@ -45,6 +45,22 @@ public class Main {
 }
 
 class FlightTicketBooking {
+    //creating queue waiting list 
+    private static Queue<String> waitingList = new LinkedList<>();
+    
+    public static void waitingEnqueue(String passengerDetails) {
+        waitingList.add(passengerDetails);
+        System.out.println("Passenger added to the waiting list");
+    }
+
+    public static String waitingDequeue() {
+        if (waitingList.isEmpty()){
+            System.out.println("Waiting list is empty");
+            return null;
+        }else{
+        return waitingList.poll();
+        }
+    }
 
     //method to search flight
     public static void searchFlight(){
@@ -183,6 +199,69 @@ class FlightTicketBooking {
             System.out.println("File Not Found");
         }catch(IOException e){
             System.out.println("IO Exception thrown");
+        }
+    }
+
+public static void cancelTicket(){
+
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter Passport Number ");
+        String passportNumber = scanner.nextLine();
+        System.out.print("Enter ticket number: ");
+        String ticketNumber = scanner.nextLine();
+
+        //to replace cancelled tickets with empty space
+        String content = "";
+        //reading csv file
+        String fileName = "FlightBooking.csv";
+        //Arraylist to store the updated lines
+        List<String> updatedLines = new ArrayList<>();
+        //variable to see if the row has been updated
+        boolean rowUpdated = false;
+        try{
+            BufferedReader br = new BufferedReader(new FileReader(fileName));
+            String line;
+            //separating the header and adding it to arraylist first
+            String header = br.readLine();
+            updatedLines.add(header);
+            while((line = br.readLine()) != null){
+                String[] text = line.split(",");
+                //checks if the current line being read is same to the parameterds passed as args
+                if ((text[4].equalsIgnoreCase(passportNumber)) && (text[5].equalsIgnoreCase(ticketNumber))){
+                    //if line found to have same details, adding row with empty data to arraylist
+                    updatedLines.add(text[0] + "," + text[1] + "," + text[2] 
+                    + "," + "" + "," + "" + "," + text[5]);
+                    rowUpdated=true;
+                } else {
+                    updatedLines.add(line);
+                }
+              }
+        }catch(FileNotFoundException e){
+            System.out.println("File not Found");
+        }catch(IOException e){
+            System.out.println("Error reading the file");
+        }
+
+        //if row update didnt occur after exiting while loop
+        if (!rowUpdated){
+            System.out.println("Booking information not found in database!\nPlease enter your details correctly.");
+        }else {
+            //row update got happen, ticket has been cancelled
+            //Adding the person first on queue to the updated lines
+            System.out.println("Cancelling is successful");
+            updatedLines.add(waitingDequeue());
+            System.out.println("Passenger is added from waiting list to confirmed list");
+        }
+
+        //writing from the updateLines arraylist to the csv file
+        //successfully cancelling ticket from the database
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(fileName))) {
+            for (String updatedLine : updatedLines) {
+                bw.write(updatedLine);
+                bw.newLine();
+            }
+        } catch (IOException e) {
+            System.err.println("Error writing to the file: ");
         }
     }
 }
