@@ -68,52 +68,76 @@ class FlightTicketBooking {
     }
 
     //method to search flight
-    public static void searchFlight(){
+        public static void searchFlight() {
+    Scanner scanner = new Scanner(System.in);
+    System.out.println("Enter start date (d/M/yyyy): ");
+    String startDate = scanner.nextLine();
+    System.out.println("Enter end date (d/M/yyyy): ");
+    String endDate = scanner.nextLine();
 
-         Scanner scanner = new Scanner(System.in);
-         System.out.println("Enter start date (d/M/yyyy): ");
-         String startDate = scanner.nextLine();
-         System.out.println("Enter end date (d/M/yyyy): ");
-         String endDate = scanner.nextLine();
+    boolean flightFound = false;
+    List<String> displayedFlights = new ArrayList<>(); // List to track displayed flights per date
 
-         boolean flightFound = false;
+    try {
+        BufferedReader reader = new BufferedReader(new FileReader(inputFilePath));
+        
+        // Skip the header row
+        reader.readLine();
+        
+        String line;
+        System.out.println("Flights available between " + startDate + " and " + endDate + ":");
+        System.out.println("Flight\tDate\tUnoccupied Seats");
 
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(inputFilePath));
-            String line;
-            System.out.println("Flights available between " + startDate + " and " + endDate + ":");
-            System.out.println("Flight\tCapacity\tDate");
+        Date startDateObj = dateformat.parse(startDate);
+        Date endDateObj = dateformat.parse(endDate);
 
-            Date startDateObj = dateformat.parse(startDate);
-            Date endDateObj = dateformat.parse(endDate);
+        while ((line = reader.readLine()) != null) {
+            String[] details = line.split(",");
+            String flightName = details[0].trim();
+            String flightDate = details[2].trim();
+            String flightIdentifier = flightName + "-" + flightDate; // Unique identifier for a flight per date
+            Date flightDateObj = dateformat.parse(flightDate);
 
-            while ((line = reader.readLine()) != null) {
-                String[] details = line.split(",");
-                String flightDate = details[2].trim();
-                Date flightDateObj = dateformat.parse(flightDate);
+            // Process only flights within the date range and not already displayed for this date
+            if (!flightDateObj.before(startDateObj) && !flightDateObj.after(endDateObj) && !displayedFlights.contains(flightIdentifier)) {
+                int unoccupiedSeats = 0;
 
+                // Reopen the file to count unoccupied seats for this specific flight and date
+                BufferedReader seatReader = new BufferedReader(new FileReader(inputFilePath));
+                seatReader.readLine(); // Skip the header row again
 
-                if (!flightDateObj.before(startDateObj) && !flightDateObj.after(endDateObj)) {
-                    System.out.println(details[0] + "\t" + details[1] + "\t\t" + flightDate);
-                    flightFound = true;
+                String seatLine;
+                while ((seatLine = seatReader.readLine()) != null) {
+                    String[] seatDetails = seatLine.split(",");
+                    if (seatDetails[0].trim().equalsIgnoreCase(flightName) && seatDetails[2].trim().equalsIgnoreCase(flightDate)) {
+                        if (seatDetails[3].trim().isEmpty()) { // Check if passenger name is empty
+                            unoccupiedSeats++;
+                        }
+                    }
                 }
-            }
+                seatReader.close();
 
-            reader.close();
-
-            if (!flightFound) {
-                System.out.println("No flights available during this duration.");
+                // Display flight information
+                System.out.println(flightName + "\t" + flightDate + "\t" + unoccupiedSeats);
+                displayedFlights.add(flightIdentifier); // Add flight per date to displayed list
+                flightFound = true;
             }
-        } catch (FileNotFoundException e) {
-            System.out.println("File not found");
-        } catch (IOException e) {
-            System.out.println("Error reading the file.");
-        } catch (ParseException e) {
-            System.out.println("Invalid date format. Please enter in d/M/yyyy format.");
         }
-    }
 
-    public static void bookTicket(){
+        reader.close();
+
+        if (!flightFound) {
+            System.out.println("No flights available during this duration.");
+        }
+    } catch (FileNotFoundException e) {
+        System.out.println("File not found");
+    } catch (IOException e) {
+        System.out.println("Error reading the file.");
+    } catch (ParseException e) {
+        System.out.println("Invalid date format. Please enter in d/M/yyyy format.");
+    }
+}
+        public static void bookTicket(){
 
         Scanner scanner = new Scanner(System.in);
         System.out.println("Enter Flight Name: ");
