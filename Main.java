@@ -1,15 +1,19 @@
 import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.WeekFields;
 import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
-        // Main Page
+        //Main Page
         Scanner scanner = new Scanner(System.in);
         System.out.println("===Welcome to Cholaz Flight Booking Services===");
-        System.out.println("======Please choose your choice of action======");
-        do {
+
+        do{
+            System.out.println("======Please choose your choice of action======");
             System.out.println("1. Search for flight availability");
             System.out.println("2. Book a flight ticket");
             System.out.println("3. Edit flight ticket information");
@@ -31,7 +35,7 @@ public class Main {
                     FlightTicketBooking.editTicket();
                     break;
                 case "4":
-                    FlightTicketBooking.viewTicketStatus();
+                    FlightTicketBooking.viewTicketStatus() ;
                     break;
                 case "5":
                     FlightTicketBooking.cancelTicket();
@@ -48,71 +52,100 @@ public class Main {
 }
 
 class FlightTicketBooking {
-    // creating queue waiting list
-    private static final String inputFilePath = "FlightBooking.csv"; // Change according to ur file
+    //creating queue waiting list
+    private static Queue<String> waitingList = new LinkedList<>();
+    private static final String inputFilePath = "C://Users//ISHWAAR//Documents//SEM3//DS//testingtesting.csv"; // Change according to ur file
+    private static final String waitingListFilePath = "C://Users//ISHWAAR//Documents//SEM3//DS//testing_waiting.csv";
     private static final SimpleDateFormat dateformat = new SimpleDateFormat("d/M/yyyy");
 
-    // method to search flight
+
+
+    //method to search flight
     public static void searchFlight() {
+        int startDate, endDate, startMonth, endMonth, startYear, endYear;
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Enter start date (d/M/yyyy): ");
-        String startDate = scanner.nextLine();
-        System.out.println("Enter end date (d/M/yyyy): ");
-        String endDate = scanner.nextLine();
+
+        System.out.println("Enter start date (dd mm yyyy): ");
+        startDate = scanner.nextInt();
+        startMonth = scanner.nextInt();
+        startYear = scanner.nextInt();
+
+        System.out.println("Enter end date (dd mm yyyy): ");
+        endDate = scanner.nextInt();
+        endMonth = scanner.nextInt();
+        endYear = scanner.nextInt();
 
         boolean flightFound = false;
-        List<String> displayedFlights = new ArrayList<>(); // List to track displayed flights per date
+        ArrayList <String> availableFlight = new ArrayList<>();
+        ArrayList <String> availableFlightName = new ArrayList<>();
+        ArrayList <String> availableDate = new ArrayList<>();
+        ArrayList <String> capacity = new ArrayList<>();
 
         try {
             BufferedReader reader = new BufferedReader(new FileReader(inputFilePath));
+            String line;
 
             // Skip the header row
-            reader.readLine();
+//            reader.readLine();
 
-            String line;
             System.out.println("Flights available between " + startDate + " and " + endDate + ":");
-            System.out.println("Flight\tDate\tUnoccupied Seats");
-
-            Date startDateObj = dateformat.parse(startDate);
-            Date endDateObj = dateformat.parse(endDate);
+            System.out.println("Flight\tCapacity\tDate");
 
             while ((line = reader.readLine()) != null) {
+                // Skip empty or malformed lines
+                if (line.trim().isEmpty())
+                    continue;
+
                 String[] details = line.split(",");
-                String flightName = details[0].trim();
-                String flightDate = details[2].trim();
-                String flightIdentifier = flightName + "-" + flightDate; // Unique identifier for a flight per date
-                Date flightDateObj = dateformat.parse(flightDate);
 
-                // Process only flights within the date range and not already displayed for this
-                // date
-                if (!flightDateObj.before(startDateObj) && !flightDateObj.after(endDateObj)
-                        && !displayedFlights.contains(flightIdentifier)) {
-                    int unoccupiedSeats = 0;
+                // Ensure the line has at least 3 columns (Flight, Capacity, Date)
+                if (details.length < 3) {
+                    continue;
+                }
 
-                    // Reopen the file to count unoccupied seats for this specific flight and date
-                    BufferedReader seatReader = new BufferedReader(new FileReader(inputFilePath));
-                    seatReader.readLine(); // Skip the header row again
+                String[] parts = details[2].split("/");
+                if (parts.length != 3) {
+                    continue;
+                }
 
-                    String seatLine;
-                    while ((seatLine = seatReader.readLine()) != null) {
-                        String[] seatDetails = seatLine.split(",");
-                        if (seatDetails[0].trim().equalsIgnoreCase(flightName)
-                                && seatDetails[2].trim().equalsIgnoreCase(flightDate)) {
-                            if (seatDetails[3].trim().isEmpty()) { // Check if passenger name is empty
-                                unoccupiedSeats++;
+                int[] flightDate = new int[3];
+                try {
+                    // Parse the flight date
+                    for (int i = 0; i < 3; i++) {
+                        flightDate[i] = Integer.parseInt(parts[i]);
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("Skipping invalid date format: " + details[2]);
+                    continue;
+                }
+
+                // Check if the flight date is within the specified range
+                if (startYear <= flightDate[2] && endYear >= flightDate[2]) {
+                    if(startMonth >= flightDate[1] && endMonth <= flightDate[1]){
+                        if(startDate <= flightDate[0] && endDate >= flightDate[0]){
+                            if(availableFlight.contains(details[0]+","+details[2]+","+details[1])) {
+                                continue;
+                            }else{
+                                availableFlight.add(details[0]+","+details[2]+","+details[1]);
+                                availableFlightName.addFirst(details[0]);
+                                availableDate.add(details[2]);
+                                capacity.add(details[1]);
+                                flightFound = true;
                             }
                         }
                     }
-                    seatReader.close();
 
-                    // Display flight information
-                    System.out.println(flightName + "\t" + flightDate + "\t" + unoccupiedSeats);
-                    displayedFlights.add(flightIdentifier); // Add flight per date to displayed list
                     flightFound = true;
                 }
             }
 
             reader.close();
+            for (int i = 0; i < availableFlight.size(); i++) {
+                System.out.println(availableFlightName.get(i) + "\t\t" + availableDate.get(i) + "\t\t" + capacity.get(i));
+            }
+            System.out.println();
+            System.out.println("==============================");
+            System.out.println();
 
             if (!flightFound) {
                 System.out.println("No flights available during this duration.");
@@ -121,8 +154,6 @@ class FlightTicketBooking {
             System.out.println("File not found");
         } catch (IOException e) {
             System.out.println("Error reading the file.");
-        } catch (ParseException e) {
-            System.out.println("Invalid date format. Please enter in d/M/yyyy format.");
         }
     }
 
@@ -225,8 +256,8 @@ class FlightTicketBooking {
         }
     }
 
-    // method to edit ticket information
-    public static void editTicket() {
+    //method to edit ticket information
+    public static void editTicket(){
 
         Scanner scanner = new Scanner(System.in);
         System.out.println("Enter Flight Name: ");
@@ -238,21 +269,18 @@ class FlightTicketBooking {
 
         boolean isEdited = false;
 
-        try {
+        try{
             BufferedReader reader = new BufferedReader(new FileReader(inputFilePath));
             StringBuilder updatedContent = new StringBuilder();
             String line;
 
-            while ((line = reader.readLine()) != null) {
-                String[] details = new String[6];
-                details = line.split(",");
-                // Finding ticket that is intended to be edited
-                if (details[0].trim().equalsIgnoreCase(flightName.trim())
-                        && details[2].trim().equalsIgnoreCase(date.trim())
-                        && details[5].trim().equalsIgnoreCase(ticketNumber.trim())) {
+            while((line = reader.readLine()) != null){
+                String [] details = new String [6];
+                details =line.split(",");
+                //Finding ticket that is intended to be edited
+                if(details[0].trim().equalsIgnoreCase(flightName.trim()) && details[2].trim().equalsIgnoreCase(date.trim()) && details [5].trim().equalsIgnoreCase(ticketNumber.trim())){
 
-                    System.out.println("Ticket found in flight " + details[0] + " under passenger " + details[3]
-                            + " passport number " + details[4]);
+                    System.out.println("Ticket found in flight "+details[0]+" under passenger "+details[3]+" passport number "+details[4]);
                     System.out.println("Enter new passenger name: ");
                     details[3] = scanner.nextLine();
                     System.out.println("Enter new Passport number: ");
@@ -260,40 +288,40 @@ class FlightTicketBooking {
                     System.out.println("Editing passenger information...");
                     isEdited = true;
                 }
-                // Append current or updated line to updated content
-                updatedContent.append(String.join(",", details)).append(System.lineSeparator());
+                //Append current or updated line to updated content
+                updatedContent.append(String.join(",",details)).append(System.lineSeparator());
             }
             reader.close();
 
-            // Overwrite the file with updated content
+            //Overwrite the file with updated content
             BufferedWriter writer = new BufferedWriter(new FileWriter(inputFilePath));
             writer.write(updatedContent.toString());
             writer.close();
 
-            if (isEdited) {
+            if(isEdited){
                 System.out.println("Ticket updated successfully...");
                 System.out.println();
                 System.out.println("==============================");
                 System.out.println();
-            } else {
+            }else{
                 System.out.println("No matching ticket found. No changes made...");
                 System.out.println();
                 System.out.println("==============================");
                 System.out.println();
             }
 
-        } catch (FileNotFoundException e) {
+        }catch(FileNotFoundException e){
             System.out.println("File Not Found");
-        } catch (IOException e) {
+        }catch(IOException e){
             System.out.println("IO Exception thrown");
         }
     }
 
-    // method to view ticket status
-    public static void viewTicketStatus() {
+    //method to view ticket status
+    public  static void viewTicketStatus(){
 
         Scanner scanner = new Scanner(System.in);
-        System.out.printf("Enter Flight Name: ");
+        System.out.println("Enter Flight Name: ");
         String flightName = scanner.nextLine();
         System.out.println("Enter Passenger Name: ");
         String passengerName = scanner.nextLine();
@@ -302,29 +330,48 @@ class FlightTicketBooking {
         System.out.println("Enter date: ");
         String date = scanner.nextLine();
 
-        try {
+        try{
             BufferedReader reader = new BufferedReader(new FileReader(inputFilePath));
+            BufferedReader waitingReader = new BufferedReader(new FileReader(waitingListFilePath));
             String line;
+            boolean confirmed = false;
 
-            while ((line = reader.readLine()) != null) {
-                String[] details = new String[6];
-                details = line.split(",");
-                // Finding ticket under passenger name and passport number
-                if (details[0].trim().equalsIgnoreCase(flightName.trim())
-                        && details[2].trim().equalsIgnoreCase(date.trim())
-                        && details[3].trim().equalsIgnoreCase(passengerName.trim())
-                        && details[4].trim().equalsIgnoreCase(passportNumber.trim())) {
-                    System.out.println("Ticket found in flight " + details[0] + " under passenger " + details[3]
-                            + " passport number " + details[4]);
+            while((line = reader.readLine()) != null){
+                String [] details = new String [6];
+                details =line.split(",");
+                //Finding ticket under passenger name and passport number
+                if(details[0].trim().equalsIgnoreCase(flightName.trim()) && details[2].trim().equalsIgnoreCase(date.trim()) && details [3].trim().equalsIgnoreCase(passengerName.trim()) && details [4].trim().equalsIgnoreCase(passportNumber.trim())){
+
+                    System.out.println("Ticket found in flight "+details[0]+" under passenger "+details[3]+" passport number "+details[4]);
                     System.out.println("Ticket status: CONFIRMED");
+                    confirmed = true;
                     break;
                 }
 
             }
+            if(!confirmed){
+                String waitingLine;
+//                waitingReader.readLine();
+                while((waitingLine = waitingReader.readLine()) != null){
+                    String[] waitingDetails = new String [4];
+                    waitingDetails = waitingLine.split(",");
 
-        } catch (FileNotFoundException e) {
+                    if(waitingDetails[0].trim().equalsIgnoreCase(flightName.trim()) && waitingDetails[1].trim().equalsIgnoreCase(date.trim()) && waitingDetails [2].trim().equalsIgnoreCase(passengerName.trim()) && waitingDetails [3].trim().equalsIgnoreCase(passportNumber.trim())){
+
+                        System.out.println("Ticket found in flight "+waitingDetails[0]+" under passenger "+waitingDetails[2]+" passport number "+waitingDetails[3]);
+                        System.out.println("Ticket status: WAITING");
+                        confirmed = true;
+                        break;
+                    }
+                }
+                waitingReader.close();
+                if(!confirmed){
+                    System.out.println("No ticket found under this passenger. ");
+                }
+            }
+        }catch(FileNotFoundException e){
             System.out.println("File Not Found");
-        } catch (IOException e) {
+        }catch(IOException e){
             System.out.println("IO Exception thrown");
         }
     }
@@ -367,7 +414,7 @@ class FlightTicketBooking {
 
             if (ticketFound) {
                 // Update the confirmed tickets file with cleared details
-                BufferedWriter writer = new BufferedWriter(new FileWriter("FlightBooking.csv"));
+                BufferedWriter writer = new BufferedWriter(new FileWriter(inputFilePath));
                 writer.write(updatedContent.toString());
                 writer.close();
 
@@ -385,7 +432,7 @@ class FlightTicketBooking {
                             nextPassenger.passportNumber,
                             nextPassenger.ticketNumber);
 
-                    try (BufferedWriter writer2 = new BufferedWriter(new FileWriter("FlightBooking.csv", true))) {
+                    try (BufferedWriter writer2 = new BufferedWriter(new FileWriter(inputFilePath, true))) {
                         writer2.write(newBooking);
                         System.out.println(
                                 "Passenger from waiting list moved to confirmed list: " + nextPassenger.passengerName);
@@ -421,7 +468,6 @@ class FlightTicketBooking {
     }
 
     class WaitingListManager {
-        private static final String WAITING_LIST_FILE = "WaitingLists.csv";
 
         // Waiting List Passenger Class
         public static class WaitingListPassenger {
@@ -431,7 +477,7 @@ class FlightTicketBooking {
             String flightCapacity;
 
             public WaitingListPassenger(String passengerName, String passportNumber, String ticketNumber,
-                    String flightCapacity) {
+                                        String flightCapacity) {
                 this.passengerName = passengerName;
                 this.passportNumber = passportNumber;
                 this.ticketNumber = ticketNumber;
@@ -454,7 +500,7 @@ class FlightTicketBooking {
 
         // Add passenger to waiting list
         public static boolean addToWaitingList(String flight, int week, String passengerName, String passportNumber,
-                String ticketNumber, String flightCapacity) {
+                                               String ticketNumber, String flightCapacity) {
             String key = flight + "_Week" + week;
             Queue<WaitingListPassenger> queue = waitingLists.get(key);
 
@@ -482,7 +528,7 @@ class FlightTicketBooking {
         // Save waiting lists to file in exact CSV format
         // Save waiting lists to file in the exact confirmed ticket format
         public static void saveWaitingListsToFile() {
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(WAITING_LIST_FILE))) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(waitingListFilePath))) {
                 // Write header to match confirmed tickets format
                 writer.write("Flight,Capacity,Date,Passenger Name,Passport Number,Ticket Number\n");
 
@@ -511,7 +557,7 @@ class FlightTicketBooking {
 
         // Load waiting lists from file
         public static void loadWaitingListsFromFile() {
-            try (BufferedReader reader = new BufferedReader(new FileReader(WAITING_LIST_FILE))) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(waitingListFilePath))) {
                 String line;
                 reader.readLine(); // Skip header
 
@@ -561,4 +607,5 @@ class FlightTicketBooking {
             return queue.poll();
         }
     }
+
 }
