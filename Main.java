@@ -377,6 +377,7 @@ class FlightTicketBooking {
     }
 
     public static void cancelTicket() {
+        WaitingListManager.loadWaitingListsFromFile();
         Scanner scanner = new Scanner(System.in);
         System.out.print("Enter Passport Number: ");
         String passportNumber = scanner.nextLine();
@@ -424,13 +425,18 @@ class FlightTicketBooking {
                 WaitingListManager.WaitingListPassenger nextPassenger = WaitingListManager
                         .removeFromWaitingList(canceledFlight, canceledWeek);
                 if (nextPassenger != null) {
+                    LocalDate boardingDate = LocalDate.of(2024, 1, 1).plusWeeks(canceledWeek - 1);
+                    String formattedDate = boardingDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+
                     // Add the next passenger to the confirmed list
-                    String newBooking = String.format("%s,%s,01/01/2024,%s,%s,%s\n",
+                    String newBooking = String.format("%s,%s,%s,%s,%s,%s\n",
                             canceledFlight,
                             nextPassenger.flightCapacity,
+                            formattedDate, // Use the calculated boarding date
                             nextPassenger.passengerName,
                             nextPassenger.passportNumber,
                             nextPassenger.ticketNumber);
+
 
                     try (BufferedWriter writer2 = new BufferedWriter(new FileWriter(inputFilePath, true))) {
                         writer2.write(newBooking);
@@ -509,15 +515,6 @@ class FlightTicketBooking {
                 return false;
             }
 
-            // Check if passenger is already in waiting list
-            boolean alreadyExists = queue.stream()
-                    .anyMatch(p -> p.passportNumber.equals(passportNumber));
-
-            if (alreadyExists) {
-                System.out.println("Passenger is already in the waiting list.");
-                return false;
-            }
-
             WaitingListPassenger passenger = new WaitingListPassenger(passengerName, passportNumber, ticketNumber,
                     flightCapacity);
             queue.add(passenger);
@@ -527,69 +524,87 @@ class FlightTicketBooking {
 
         // Save waiting lists to file in exact CSV format
         // Save waiting lists to file in the exact confirmed ticket format
-        public static void saveWaitingListsToFile() {
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(waitingListFilePath))) {
-                // Write header to match confirmed tickets format
-                writer.write("Flight,Capacity,Date,Passenger Name,Passport Number,Ticket Number\n");
+    public static void saveWaitingListsToFile() {
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(waitingListFilePath))) {
+        // Write header to match confirmed tickets format
+        writer.write("Flight,Capacity,Date,Passenger Name,Passport Number,Ticket Number\n");
 
-                for (Map.Entry<String, Queue<WaitingListPassenger>> entry : waitingLists.entrySet()) {
-                    String key = entry.getKey();
-                    String flight = key.split("_")[0];
+        // Define the start date for flights (e.g., first day of 2024)
+        LocalDate startDate = LocalDate.of(2024, 1, 1);
 
-                    int counter = 1; // Start counter for waiting list ticket numbers
-                    for (WaitingListPassenger passenger : entry.getValue()) {
-                        String ticketNumber = flight + "-WL" + String.format("%03d", counter++);
+        for (Map.Entry<String, Queue<WaitingListPassenger>> entry : waitingLists.entrySet()) {
+            String key = entry.getKey();
 
-                        // Write each waiting list entry in the exact format of confirmed tickets
-                        writer.write(String.format("%s,%s,01/01/2024,%s,%s,%s\n",
-                                flight,
-                                passenger.flightCapacity,
-                                passenger.passengerName,
-                                passenger.passportNumber,
-                                ticketNumber));
-                    }
-                }
-                System.out.println("Waiting lists saved successfully.");
-            } catch (IOException e) {
-                System.err.println("Error writing waiting lists to file: " + e.getMessage());
+            // Parse flight and week from the key
+            String flight = key.split("_")[0]; // Extract flight code
+            int week = Integer.parseInt(key.split("_Week")[1]); // Extract week number
+
+            // Calculate boarding date based on week number
+            LocalDate boardingDate = startDate.plusWeeks(week - 1);
+
+            int counter = 1; // Start counter for waiting list ticket numbers
+            for (WaitingListPassenger passenger : entry.getValue()) {
+                String ticketNumber = flight + "-WL" + String.format("%03d", counter++);
+
+                // Write each waiting list entry with the calculated boarding date
+                writer.write(String.format("%s,%s,%s,%s,%s,%s\n",
+                        flight,
+                        passenger.flightCapacity,
+                        boardingDate, // Calculated date
+                        passenger.passengerName,
+                        passenger.passportNumber,
+                        ticketNumber));
             }
         }
+        System.out.println("Waiting lists saved successfully.");
+    } catch (IOException e) {
+        System.err.println("Error writing waiting lists to file: " + e.getMessage());
+    }
+}
 
         // Load waiting lists from file
         public static void loadWaitingListsFromFile() {
             try (BufferedReader reader = new BufferedReader(new FileReader(waitingListFilePath))) {
                 String line;
                 reader.readLine(); // Skip header
-
+        
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd"); // Assuming the date format in CSV is YYYY-MM-DD
+        
                 while ((line = reader.readLine()) != null) {
                     String[] details = line.split(",");
                     if (details.length < 6) {
                         System.err.println("Invalid waiting list entry: " + line);
                         continue;
                     }
-
-                    // Extract details
+        
                     String flight = details[0];
                     String flightCapacity = details[1];
+                    String boardingDate = details[2]; // Get the boarding date from the file
                     String passengerName = details[3];
                     String passportNumber = details[4];
                     String ticketNumber = details[5];
-
-                    // Dynamically determine week from ticket number
-                    String weekString = ticketNumber.split("-")[1].substring(2); // Extract WL### (e.g., WL001)
-                    int week = Integer.parseInt(weekString); // Convert to integer
-
-                    // Add to waiting list
-                    boolean added = addToWaitingList(flight, week, passengerName, passportNumber, ticketNumber,
-                            flightCapacity);
-                    if (!added) {
-                        System.err.println("Failed to add passenger to waiting list: " + line);
+        
+                    try {
+                        // Parse the boarding date
+                        LocalDate date = LocalDate.parse(boardingDate, formatter);
+        
+                        // Determine the week of the year
+                        WeekFields weekFields = WeekFields.of(Locale.getDefault());
+                        int week = date.get(weekFields.weekOfWeekBasedYear());
+        
+                        // Add the passenger to the waiting list for the parsed week
+                        boolean added = addToWaitingList(flight, week, passengerName, passportNumber, ticketNumber, flightCapacity);
+                        if (!added) {
+                            System.err.println("Failed to add passenger to waiting list: " + line);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error parsing date or adding to waiting list: " + e.getMessage() + " - Line: " + line);
                     }
                 }
                 System.out.println("Waiting lists loaded successfully.");
             } catch (FileNotFoundException e) {
                 System.out.println("No existing waiting list file found.");
-            } catch (IOException | NumberFormatException e) {
+            } catch (IOException e) {
                 System.err.println("Error loading waiting lists: " + e.getMessage());
             }
         }
@@ -602,10 +617,13 @@ class FlightTicketBooking {
             if (queue == null || queue.isEmpty()) {
                 System.out.println("Waiting list is empty for " + key);
                 return null;
+            }else{
+                return queue.poll();
             }
-
-            return queue.poll();
         }
+    }
+
+}
     }
 
 }
