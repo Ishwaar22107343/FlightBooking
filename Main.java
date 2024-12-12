@@ -53,24 +53,22 @@ class FlightTicketBooking {
     private static Queue<String> waitingList = new LinkedList<>();
     private static final String inputFilePath = "C://Users//ISHWAAR//Documents//SEM3//DS//testing.csv"; // Change according to ur file
     private static final String waitingListFilePath = "C://Users//ISHWAAR//Documents//SEM3//DS//testing_waiting_list.csv";
-    
+
 
 
 
     //method to search flight
     public static void searchFlight() {
-        int startDate, endDate, startMonth, endMonth, startYear, endYear;
+
+        String start;
+        String end;
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("Enter start date (dd mm yyyy): ");
-        startDate = scanner.nextInt();
-        startMonth = scanner.nextInt();
-        startYear = scanner.nextInt();
+        start = scanner.nextLine();
 
         System.out.println("Enter end date (dd mm yyyy): ");
-        endDate = scanner.nextInt();
-        endMonth = scanner.nextInt();
-        endYear = scanner.nextInt();
+        end = scanner.nextLine();
 
         boolean flightFound = false;
         ArrayList <String> availableFlight = new ArrayList<>();
@@ -82,7 +80,7 @@ class FlightTicketBooking {
             BufferedReader reader = new BufferedReader(new FileReader(inputFilePath));
             String line;
 
-            System.out.println("Flights available between " + startDate+"/"+startMonth+"/"+startYear + " and " + endDate +"/"+endMonth+"/"+endYear+" :");
+            System.out.println("Flights available between " + start+ " and " + end+" :");
             System.out.println("Flight\tDate\t\t\tCapacity");
 
             while ((line = reader.readLine()) != null) {
@@ -91,6 +89,16 @@ class FlightTicketBooking {
                     continue;
 
                 String[] details = line.split(",");
+                String[] dateS = start.split("/");
+                int[] startDate = new int [3];
+                startDate[0] = Integer.parseInt(dateS[0]);
+                startDate[1] = Integer.parseInt(dateS[1]);
+                startDate[2] = Integer.parseInt(dateS[2]);
+                String[] dateE = end.split("/");
+                int[] endDate = new int [3];
+                endDate[0] = Integer.parseInt(dateE[0]);
+                endDate[1] = Integer.parseInt(dateE[1]);
+                endDate[2] = Integer.parseInt(dateE[2]);
 
                 // Ensure the line has at least 3 columns (Flight, Capacity, Date)
                 if (details.length < 3) {
@@ -114,9 +122,9 @@ class FlightTicketBooking {
                 }
 
                 // Check if the flight date is within the specified range
-                if (startYear <= flightDate[2] && endYear >= flightDate[2]) {
-                    if(startMonth >= flightDate[1] && endMonth <= flightDate[1]){
-                        if(startDate <= flightDate[0] && endDate >= flightDate[0]){
+                if (startDate[2] <= flightDate[2] && endDate[2] >= flightDate[2]) {
+                    if(startDate[1] >= flightDate[1] && endDate[1] <= flightDate[1]){
+                        if(startDate[0] <= flightDate[0] && endDate[0] >= flightDate[0]){
                             if(availableFlight.contains(details[0]+","+details[2]+","+details[1])) {
                                 continue;
                             }else{
@@ -170,7 +178,7 @@ class FlightTicketBooking {
             String line;
             boolean flightFound = false;
             boolean seatAvailable = false;
-            
+
             while ((line = reader.readLine()) != null) {
 
                 if(line.trim().isEmpty()){
