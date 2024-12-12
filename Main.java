@@ -53,7 +53,7 @@ class FlightTicketBooking {
     private static Queue<String> waitingList = new LinkedList<>();
     private static final String inputFilePath = "C://Users//ISHWAAR//Documents//SEM3//DS//testing.csv"; // Change according to ur file
     private static final String waitingListFilePath = "C://Users//ISHWAAR//Documents//SEM3//DS//testing_waiting_list.csv";
-    private static final SimpleDateFormat dateformat = new SimpleDateFormat("d/M/yyyy");
+    
 
 
 
@@ -81,9 +81,6 @@ class FlightTicketBooking {
         try {
             BufferedReader reader = new BufferedReader(new FileReader(inputFilePath));
             String line;
-
-            // Skip the header row
-//            reader.readLine();
 
             System.out.println("Flights available between " + startDate+"/"+startMonth+"/"+startYear + " and " + endDate +"/"+endMonth+"/"+endYear+" :");
             System.out.println("Flight\tDate\t\t\tCapacity");
@@ -143,7 +140,7 @@ class FlightTicketBooking {
             System.out.println();
             System.out.println("==============================");
             System.out.println();
-            
+
 
             if (!flightFound) {
                 System.out.println("No flights available during this duration.");
@@ -162,7 +159,7 @@ class FlightTicketBooking {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Enter Flight Name: ");
         String flightName = scanner.nextLine();
-        System.out.println("Enter Flight Date (d/M/yyyy): ");
+        System.out.println("Enter Flight Date (d/m/yyyy): ");
         String flightDate = scanner.nextLine();
 
         Queue<String> waitingList = loadWaitingList(flightName, flightDate);
@@ -173,8 +170,7 @@ class FlightTicketBooking {
             String line;
             boolean flightFound = false;
             boolean seatAvailable = false;
-
-//            reader.readLine();
+            
             while ((line = reader.readLine()) != null) {
 
                 if(line.trim().isEmpty()){
@@ -395,7 +391,6 @@ class FlightTicketBooking {
             }
             if(!confirmed){
                 String waitingLine;
-//                waitingReader.readLine();
                 while((waitingLine = waitingReader.readLine()) != null){
                     String[] waitingDetails = new String [4];
                     waitingDetails = waitingLine.split(",");
