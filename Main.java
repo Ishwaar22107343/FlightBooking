@@ -49,112 +49,100 @@ public class Main {
 }
 
 class FlightTicketBooking {
-    //creating queue waiting list
-    private static Queue<String> waitingList = new LinkedList<>();
+
+
     private static final String inputFilePath = "C://Users//ISHWAAR//Documents//SEM3//DS//testing.csv"; // Change according to ur file
     private static final String waitingListFilePath = "C://Users//ISHWAAR//Documents//SEM3//DS//testing_waiting_list.csv";
 
 
 
 
+
     //method to search flight
     public static void searchFlight() {
-
-        String start;
-        String end;
         Scanner scanner = new Scanner(System.in);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        dateFormat.setLenient(false); // Strict date parsing
 
-        System.out.println("Enter start date (dd mm yyyy): ");
-        start = scanner.nextLine();
+        Date startDate = null, endDate = null;
 
-        System.out.println("Enter end date (dd mm yyyy): ");
-        end = scanner.nextLine();
+        while (startDate == null) {
+            System.out.println("Enter start date (d/m/yyyy): ");
+            String startDateInput = scanner.nextLine();
+            try {
+                startDate = dateFormat.parse(startDateInput);
+            } catch (ParseException e) {
+                System.out.println("Wrong date format or invalid date.");
+            }
+        }
+
+        while (endDate == null) {
+            System.out.println("Enter end date (d/m/yyyy): ");
+            String endDateInput = scanner.nextLine();
+            try {
+                endDate = dateFormat.parse(endDateInput);
+            } catch (ParseException e) {
+                System.out.println("Wrong date format or invalid date.");
+            }
+        }
 
         boolean flightFound = false;
-        ArrayList <String> availableFlight = new ArrayList<>();
-        ArrayList <String> availableFlightName = new ArrayList<>();
-        ArrayList <String> availableDate = new ArrayList<>();
-        ArrayList <String> capacity = new ArrayList<>();
+        ArrayList<String> availableFlight = new ArrayList<>();
+        ArrayList<String> availableFlightName = new ArrayList<>();
+        ArrayList<String> availableDate = new ArrayList<>();
+        ArrayList<String> capacity = new ArrayList<>();
 
         try {
             BufferedReader reader = new BufferedReader(new FileReader(inputFilePath));
             String line;
 
-            System.out.println("Flights available between " + start+ " and " + end+" :");
-            System.out.println("Flight\tDate\t\t\tCapacity");
+
 
             while ((line = reader.readLine()) != null) {
-                // Skip empty or malformed lines
-                if (line.trim().isEmpty())
-                    continue;
+                if (line.trim().isEmpty()) continue;
 
                 String[] details = line.split(",");
-                String[] dateS = start.split("/");
-                int[] startDate = new int [3];
-                startDate[0] = Integer.parseInt(dateS[0]);
-                startDate[1] = Integer.parseInt(dateS[1]);
-                startDate[2] = Integer.parseInt(dateS[2]);
-                String[] dateE = end.split("/");
-                int[] endDate = new int [3];
-                endDate[0] = Integer.parseInt(dateE[0]);
-                endDate[1] = Integer.parseInt(dateE[1]);
-                endDate[2] = Integer.parseInt(dateE[2]);
+                if (details.length < 3) continue;
 
-                // Ensure the line has at least 3 columns (Flight, Capacity, Date)
-                if (details.length < 3) {
-                    continue;
-                }
-
-                String[] parts = details[2].split("/");
-                if (parts.length != 3) {
-                    continue;
-                }
-
-                int[] flightDate = new int[3];
+                String flightDateStr = details[2];
+                Date flightDate;
                 try {
-                    // Parse the flight date
-                    for (int i = 0; i < 3; i++) {
-                        flightDate[i] = Integer.parseInt(parts[i]);
-                    }
-                } catch (NumberFormatException e) {
-                    System.out.println("Skipping invalid date format: " + details[2]);
+                    flightDate = dateFormat.parse(flightDateStr);
+                } catch (ParseException e) {
+                    System.out.println("Skipping invalid date format: " + flightDateStr);
                     continue;
                 }
 
-                // Check if the flight date is within the specified range
-                if (startDate[2] <= flightDate[2] && endDate[2] >= flightDate[2]) {
-                    if(startDate[1] >= flightDate[1] && endDate[1] <= flightDate[1]){
-                        if(startDate[0] <= flightDate[0] && endDate[0] >= flightDate[0]){
-                            if(availableFlight.contains(details[0]+","+details[2]+","+details[1])) {
-                                continue;
-                            }else{
-                                availableFlight.add(details[0]+","+details[2]+","+details[1]);
-                                availableFlightName.addFirst(details[0]);
-                                availableDate.add(details[2]);
-                                capacity.add(details[1]);
-                                flightFound = true;
-                            }
-                        }
+                if (!flightDate.before(startDate) && !flightDate.after(endDate)) {
+                    String flightInfo = details[0] + "," + details[2] + "," + details[1];
+                    if (!availableFlight.contains(flightInfo)) {
+                        availableFlight.add(flightInfo);
+                        availableFlightName.add(details[0]);
+                        availableDate.add(details[2]);
+                        capacity.add(details[1]);
+                        flightFound = true;
                     }
-
-                    flightFound = true;
                 }
             }
 
             reader.close();
-            for (int i = 0; i < availableFlight.size(); i++) {
-                System.out.println(availableFlightName.get(i) + "\t\t" + availableDate.get(i) + "\t\t" + capacity.get(i));
-            }
-            System.out.println();
-            System.out.println("==============================");
-            System.out.println();
-
-
-            if (!flightFound) {
+            if(flightFound){
+                System.out.println("Flights available between " + dateFormat.format(startDate) + " and " + dateFormat.format(endDate) + " :");
+                System.out.println("Flight\tDate\t\t\tCapacity");
+                for (int i = 0; i < availableFlight.size(); i++) {
+                    System.out.println(availableFlightName.get(i) + "\t\t" + availableDate.get(i) + "\t\t" + capacity.get(i));
+                }
+                System.out.println();
+                System.out.println("==============================");
+                System.out.println();
+            }else{
+                System.out.println();
+                System.out.println("==============================");
                 System.out.println("No flights available during this duration.");
                 System.out.println("==============================");
                 System.out.println();
             }
+
         } catch (FileNotFoundException e) {
             System.out.println("File not found");
         } catch (IOException e) {
